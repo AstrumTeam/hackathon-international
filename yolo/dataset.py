@@ -4,20 +4,19 @@ import shutil
 from pathlib import Path
 
 # Путь к исходным папкам с изображениями и метками
-images_path = "image_preprocessed"
+images_path = "/Users/vladislav/Хакатоны/hackathon-international/yolo/image_preprocessed"
 labels_path = "/Users/vladislav/Хакатоны/hackathon-international/train Росатом/train/labels"
 
 # Папка, куда будет сохранен новый YOLO-совместимый датасет
 output_dir = "yolo_dataset_processed"
 os.makedirs(output_dir, exist_ok=True)
 
-# Процент данных для train, val и test
-train_ratio = 0.7
+# Процент данных для train и val
+train_ratio = 0.8
 val_ratio = 0.2
-test_ratio = 0.1
 
 # Убедимся, что суммы пропорций равны 1.0
-assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6, "Суммы пропорций должны составлять 1.0"
+assert abs(train_ratio + val_ratio - 1.0) < 1e-6, "Суммы пропорций должны составлять 1.0"
 
 # Список всех изображений и меток с приведением расширения и имени к нижнему регистру
 image_files = sorted([f for f in os.listdir(images_path) if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
@@ -41,16 +40,14 @@ print(f"Файлов изображений без соответствующи�
 # Убедимся, что теперь количество изображений и меток совпадает
 assert len(image_files) == len(label_files), "Количество изображений и меток должно совпадать"
 
-# Перемешиваем данные и делим их на train, val и test
+# Перемешиваем данные и делим их на train и val
 data = list(zip(image_files, label_files))
 random.shuffle(data)
 
 train_split = int(len(data) * train_ratio)
-val_split = train_split + int(len(data) * val_ratio)
 
 train_data = data[:train_split]
-val_data = data[train_split:val_split]
-test_data = data[val_split:]
+val_data = data[train_split:]
 
 # Функция для копирования файлов
 def copy_files(data, split_name):
@@ -66,19 +63,17 @@ def copy_files(data, split_name):
 # Копируем файлы в соответствующие папки
 copy_files(train_data, "train")
 copy_files(val_data, "val")
-copy_files(test_data, "test")
 
 # Создаем YAML файл для конфигурации YOLO
 yaml_content = f"""
-train: {output_dir}/train/images
-val: {output_dir}/val/images
-test: {output_dir}/test/images
+train: ../train/images
+val: ../val/images
 
 # Количество классов
-nc: <количество_классов>
+nc: 1
 
 # Имена классов (замените на свои классы)
-names: [<имя_класса_1>, <имя_класса_2>, ...]
+names: ['0']
 """
 
 with open(os.path.join(output_dir, "dataset.yaml"), "w") as f:
